@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORTech - Ticket de Compra</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+    <header>
+        <h2>ORTech Autoservicio</h2>
+        <span>Alumno: Lucas Ortellado</span>
+    </header>
+
+    <div class="caja-centrada" style="max-width: 600px; text-align: left;">
+        <h2 style="text-align: center; margin-bottom: 15px;">Comprobante de Compra</h2>
+        <hr style="margin-bottom: 15px;">
+        
+        <p><strong>Empresa:</strong> ORTech Hardware</p>
+        <p><strong>N° de Pedido:</strong> <span id="nroPedido"></span></p>
+        <p><strong>Cliente:</strong> <span id="nombreCliente"></span></p>
+        <p><strong>Fecha:</strong> <span id="fechaPedido"></span></p>
+
+        <table style="margin-top: 15px;">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cant.</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody id="detalleTicket"></tbody>
+        </table>
+
+        <h3 id="totalTicket" style="text-align: right; margin-top: 20px;"></h3>
+
+        <div style="margin-top: 25px; display: flex; justify-content: space-between;">
+            <button class="btn-secundario" onclick="window.print()">Imprimir / Guardar PDF</button>
+            <button onclick="finalizar()">Nueva Compra</button>
+        </div>
+    </div>
+
+    <script>
+        const datosTicket = localStorage.getItem('ultimoTicket');
+
+        if (!datosTicket) {
+            window.location.href = 'index.html';
+        } else {
+            const ticket = JSON.parse(datosTicket);
+            document.getElementById('nroPedido').textContent = '#' + ticket.ventaId;
+            document.getElementById('nombreCliente').textContent = ticket.nombreCliente;
+            
+            const fechaFormateada = new Date(ticket.fecha).toLocaleString('es-AR');
+            document.getElementById('fechaPedido').textContent = fechaFormateada;
+
+            const tbody = document.getElementById('detalleTicket');
+            ticket.items.forEach(item => {
+                const subtotal = item.precio * item.cantidad;
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${item.nombre}</td>
+                    <td>${item.cantidad}</td>
+                    <td>$${Number(item.precio).toLocaleString('es-AR')}</td>
+                    <td>$${subtotal.toLocaleString('es-AR')}</td>
+                `;
+                tbody.appendChild(fila);
+            });
+
+            document.getElementById('totalTicket').textContent = 'Total Pagado: $' + Number(ticket.total).toLocaleString('es-AR');
+        }
+
+        function finalizar() {
+            localStorage.removeItem('nombreCliente');
+            localStorage.removeItem('carrito');
+            localStorage.removeItem('ultimoTicket');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

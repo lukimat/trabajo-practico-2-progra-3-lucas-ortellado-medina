@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORTech - Dashboard</title>
+    <link rel="stylesheet" href="/estilos.css">
+</head>
+<body>
+    <header>
+        <h2>ORTech - Administración</h2>
+        <div>
+            <span style="margin-right: 15px;">Alumno: Lucas Ortellado</span>
+            <a href="/admin/logout" class="btn btn-peligro">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <div class="contenedor-principal">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Gestión de Productos</h1>
+            <a href="/admin/productos/nuevo" class="btn">+ Agregar Producto</a>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% productos.forEach(prod => { %>
+                    <tr>
+                        <td><%= prod.id %></td>
+                        <td>
+                            <img src="/img/<%= prod.imagen %>" onerror="this.src='https://via.placeholder.com/50?text=PC'" style="width: 50px; height: 50px; object-fit: contain;">
+                        </td>
+                        <td><%= prod.nombre %></td>
+                        <td style="text-transform: capitalize;"><%= prod.categoria %></td>
+                        <td>$<%= Number(prod.precio).toLocaleString('es-AR') %></td>
+                        <td>
+                            <% if (prod.activo) { %>
+                                <span style="color: #16a34a; font-weight: bold;">Activo</span>
+                            <% } else { %>
+                                <span style="color: #dc2626; font-weight: bold;">Inactivo</span>
+                            <% } %>
+                        </td>
+                        <td style="display: flex; gap: 8px;">
+                            <a href="/admin/productos/editar/<%= prod.id %>" class="btn btn-secundario">Editar</a>
+                            
+                            <form action="/admin/productos/estado/<%= prod.id %>" method="POST" onsubmit="return confirmarCambio('<%= prod.nombre %>', <%= prod.activo %>)">
+                                <% if (prod.activo) { %>
+                                    <button type="submit" class="btn-peligro">Dar de Baja</button>
+                                <% } else { %>
+                                    <button type="submit">Activar</button>
+                                <% } %>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function confirmarCambio(nombre, activo) {
+            const accion = activo ? 'dar de baja' : 'activar';
+            return confirm('¿Estás seguro de que querés ' + accion + ' el producto "' + nombre + '"?');
+        }
+    </script>
+</body>
+</html>

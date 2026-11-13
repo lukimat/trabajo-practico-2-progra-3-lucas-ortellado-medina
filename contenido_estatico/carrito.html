@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORTech - Carrito</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+    <header>
+        <h2>ORTech Autoservicio</h2>
+        <div>
+            <span id="saludoCliente" style="margin-right: 15px;"></span>
+            <span>Alumno: Lucas Ortellado</span>
+        </div>
+    </header>
+
+    <div class="contenedor-principal">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Tu Carrito</h1>
+            <a href="productos.html" class="btn btn-secundario">Volver al catálogo</a>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Precio Unitario</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaCarrito"></tbody>
+        </table>
+
+        <div style="margin-top: 25px; text-align: right;">
+            <h2 id="textoTotal" style="margin-bottom: 15px;">Total: $0</h2>
+            <button class="btn-peligro" onclick="vaciarCarrito()">Vaciar Carrito</button>
+            <button id="btnConfirmar" onclick="confirmarCompra()">Confirmar Compra</button>
+        </div>
+    </div>
+
+    <script>
+        const nombreCliente = localStorage.getItem('nombreCliente');
+        if (!nombreCliente) {
+            window.location.href = 'index.html';
+        } else {
+            document.getElementById('saludoCliente').textContent = 'Hola, ' + nombreCliente;
+        }
+
+        function obtenerCarrito() {
+            const guardado = localStorage.getItem('carrito');
+            return guardado ? JSON.parse(guardado) : [];
+        }
+
+        function guardarCarrito(carrito) {
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            renderizarCarrito();
+        }
+
+        function renderizarCarrito() {
+            const carrito = obtenerCarrito();
+            const tbody = document.getElementById('tablaCarrito');
+            const btnConfirmar = document.getElementById('btnConfirmar');
+            tbody.innerHTML = '';
+
+            if (carrito.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay productos en el carrito</td></tr>';
+                document.getElementById('textoTotal').textContent = 'Total: $0';
+                btnConfirmar.disabled = true;
+                btnConfirmar.style.opacity = '0.5';
+                return;
+            }
+
+            btnConfirmar.disabled = false;
+            btnConfirmar.style.opacity = '1';
+
+            let total = 0;
+
+            carrito.forEach(item => {
+                const subtotal = item.precio * item.cantidad;
+                total += subtotal;
+
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${item.nombre}</td>
+                    <td>$${Number(item.precio).toLocaleString('es-AR')}</td>
+                    <td>
+                        <button class="btn-secundario" style="padding: 4px 10px;" onclick="cambiarCantidad(${item.id}, -1)">-</button>
+                        <span style="margin: 0 10px; font-weight: bold;">${item.cantidad}</span>
+                        <button class="btn-secundario" style="padding: 4px 10px;" onclick="cambiarCantidad(${item.id}, 1)">+</button>
+                    </td>
+                    <td>$${subtotal.toLocaleString('es-AR')}</td>
+                    <td>
+                        <button class="btn-peligro" onclick="eliminarProducto(${item.id})">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+
+            document.getElementById('textoTotal').textContent = 'Total: $' + total.toLocaleString('es-AR');
+        }
+
+        function cambiarCantidad(id, cambio) {
+            const carrito = obtenerCarrito();
+            const indice = carrito.findIndex(item => item.id === id);
+
+            if (indice !== -1) {
+                carrito[indice].cantidad += cambio;
+                if (carrito[indice].cantidad <= 0) {
+                    carrito.splice(indice, 1);
+                }
+                guardarCarrito(carrito);
+            }
+        }
+
+        function eliminarProducto(id) {
+            let carrito = obtenerCarrito();
+            carrito = carrito.filter(item => item.id !== id);
+            guardarCarrito(carrito);
+        }
+
+        function vaciarCarrito() {
+            localStorage.setItem('carrito', JSON.stringify([]));
+            renderizarCarrito();
+        }
+
+        async function confirmarCompra() {
+            const carrito = obtenerCarrito();
+            if (carrito.length === 0) return;
+
+            try {
+                const respuesta = await fetch('/api/ventas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nombreCliente: nombreCliente,
+                        items: carrito
+                    })
+                });
+
+                if (respuesta.ok) {
+                    const datosVenta = await respuesta.json();
+                    localStorage.setItem('ultimoTicket', JSON.stringify({
+                        ventaId: datosVenta.ventaId,
+                        fecha: datosVenta.fecha,
+                        nombreCliente: nombreCliente,
+                        total: datosVenta.total,
+                        items: carrito
+                    }));
+                    localStorage.setItem('carrito', JSON.stringify([]));
+                    window.location.href = 'ticket.html';
+                } else {
+                    alert('Hubo un problema al procesar la compra');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error de conexión con el servidor');
+            }
+        }
+
+        renderizarCarrito();
+    </script>
+</body>
+</html>

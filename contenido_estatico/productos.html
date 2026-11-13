@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORTech - Catálogo</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+    <header>
+        <h2>ORTech Autoservicio</h2>
+        <div>
+            <span id="saludoCliente" style="margin-right: 15px;"></span>
+            <span>Alumno: Lucas Ortellado</span>
+        </div>
+    </header>
+
+    <div class="contenedor-principal">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="filtros" style="margin-bottom: 0;">
+                <button onclick="filtrarCategoria('todos')">Todos</button>
+                <button class="btn-secundario" onclick="filtrarCategoria('componentes')">Componentes</button>
+                <button class="btn-secundario" onclick="filtrarCategoria('perifericos')">Periféricos</button>
+            </div>
+            <div>
+                <a href="carrito.html" class="btn">Ver Carrito (<span id="contadorCarrito">0</span>)</a>
+                <button class="btn-peligro" onclick="salir()">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="contenedorProductos" class="grilla-productos"></div>
+    </div>
+
+    <script>
+        //Apenas carga la página, lee localStorage.getItem('nombreCliente'). Si es null (porque alguien quiso
+        //entrar escribiendo /productos.html en la URL sin pasar por la bienvenida),
+        //lo patea de vuelta a index.html.
+        const nombreCliente = localStorage.getItem('nombreCliente');
+        if (!nombreCliente) {
+            window.location.href = 'index.html';
+        } else {
+            document.getElementById('saludoCliente').textContent = 'Hola, ' + nombreCliente;
+        }
+
+        let listaProductos = [];
+        let categoriaActual = 'todos';
+
+        function obtenerCarrito() {
+            const guardado = localStorage.getItem('carrito');
+            return guardado ? JSON.parse(guardado) : [];
+        }
+
+        function guardarCarrito(carrito) {
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            actualizarContador();
+            mostrarProductos();
+        }
+
+        function actualizarContador() {
+            const carrito = obtenerCarrito();
+            let totalUnidades = 0;
+            carrito.forEach(item => {
+                totalUnidades += item.cantidad;
+            });
+            document.getElementById('contadorCarrito').textContent = totalUnidades;
+        }
+
+        async function cargarProductos() {
+            try {
+                const respuesta = await fetch('/api/productos');
+                listaProductos = await respuesta.json();
+                mostrarProductos();
+                actualizarContador();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function filtrarCategoria(categoria) {
+            categoriaActual = categoria;
+            mostrarProductos();
+        }
+
+        function mostrarProductos() {
+            const contenedor = document.getElementById('contenedorProductos');
+            contenedor.innerHTML = '';
+
+            const carrito = obtenerCarrito();
+
+            const filtrados = listaProductos.filter(prod => {
+                if (categoriaActual === 'todos') return true;
+                return prod.categoria === categoriaActual;
+            });
+
+            filtrados.forEach(prod => {
+                const itemEnCarrito = carrito.find(item => item.id === prod.id);
+                const cantidadActual = itemEnCarrito ? itemEnCarrito.cantidad : 0;
+
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'tarjeta';
+
+                let controlesHTML = '';
+                if (cantidadActual === 0) {
+                    controlesHTML = `<button onclick="agregarAlCarrito(${prod.id})">Agregar al carrito</button>`;
+                } else {
+                    controlesHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                            <button class="btn-peligro" onclick="cambiarCantidad(${prod.id}, -1)">-</button>
+                            <span style="font-weight: bold;">${cantidadActual}</span>
+                            <button onclick="cambiarCantidad(${prod.id}, 1)">+</button>
+                        </div>
+                    `;
+                }
+
+                tarjeta.innerHTML = `
+                    <img src="img/${prod.imagen}" onerror="this.src='https://via.placeholder.com/150?text=Hardware'" alt="${prod.nombre}">
+                    <h3>${prod.nombre}</h3>
+                    <p style="color: #64748b; font-size: 14px; text-transform: capitalize;">${prod.categoria}</p>
+                    <p class="precio">$${Number(prod.precio).toLocaleString('es-AR')}</p>
+                    ${controlesHTML}
+                `;
+
+                contenedor.appendChild(tarjeta);
+            });
+        }
+
+        function agregarAlCarrito(idProducto) {
+            const carrito = obtenerCarrito();
+            const prod = listaProductos.find(p => p.id === idProducto);
+            
+            if (prod) {
+                carrito.push({
+                    id: prod.id,
+                    nombre: prod.nombre,
+                    precio: Number(prod.precio),
+                    imagen: prod.imagen,
+                    cantidad: 1
+                });
+                guardarCarrito(carrito);
+            }
+        }
+
+        function cambiarCantidad(idProducto, cambio) {
+            let carrito = obtenerCarrito();
+            const indice = carrito.findIndex(item => item.id === idProducto);
+
+            if (indice !== -1) {
+                carrito[indice].cantidad += cambio;
+                if (carrito[indice].cantidad <= 0) {
+                    carrito.splice(indice, 1);
+                }
+                guardarCarrito(carrito);
+            }
+        }
+
+        function salir() {
+            localStorage.removeItem('nombreCliente');
+            localStorage.removeItem('carrito');
+            window.location.href = 'index.html';
+        }
+
+        cargarProductos();
+    </script>
+</body>
+</html>

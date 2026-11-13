@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORTech - Login Admin</title>
+    <link rel="stylesheet" href="/estilos.css">
+</head>
+<body>
+    <header>
+        <h2>ORTech - Panel Administrador</h2>
+        <span>Alumno: Lucas Ortellado</span>
+    </header>
+
+    <div class="caja-centrada">
+        <h2>Iniciar Sesión</h2>
+
+        <% if (error) { %>
+            <p style="color: #dc2626; margin: 10px 0; font-weight: bold;"><%= error %></p>
+        <% } %>
+
+        <form action="/admin/login" method="POST">
+            <input type="email" id="correo" name="correo" placeholder="Correo electrónico" required>
+            <input type="password" id="password" name="password" placeholder="Contraseña" required>
+            <button type="submit" style="width: 100%; margin-top: 10px;">Ingresar</button>
+        </form>
+
+        <button type="button" class="btn-secundario" style="width: 100%; margin-top: 10px;" onclick="autocompletar()">
+            Acceso Rápido (Testing)
+        </button>
+
+        <div style="margin-top: 15px;">
+            <a href="/" style="color: #2563eb; font-size: 14px;">Volver al Tótem</a>
+        </div>
+    </div>
+
+    <script>
+        function autocompletar() {
+            document.getElementById('correo').value = 'admin@totem.com';
+            document.getElementById('password').value = '123456';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORTech - Bienvenida</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+    <header>
+        <h2>ORTech Autoservicio</h2>
+        <span>Alumno: Lucas Ortellado</span>
+    </header>
+
+    <div class="caja-centrada">
+        <h1>Bienvenido</h1>
+        <p style="margin-top: 10px;">Ingresá tu nombre para comenzar el pedido</p>
+        
+        <form id="formBienvenida">
+            <input type="text" id="nombreCliente" placeholder="Tu nombre..." required>
+            <button type="submit" style="width: 100%;">Continuar</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('formBienvenida');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('nombreCliente').value.trim();
+            
+            if (nombre !== '') {
+                localStorage.setItem('nombreCliente', nombre);
+                localStorage.setItem('carrito', JSON.stringify([]));
+                window.location.href = 'productos.html';
+            }
+        });
+    </script>
+</body>
+</html>
