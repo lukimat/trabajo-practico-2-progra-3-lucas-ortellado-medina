@@ -11,6 +11,11 @@ const mostrarLogin = (req, res) => {
 const procesarLogin = async (req, res) => {
     try {
         const { correo, password } = req.body;
+
+        if (!correo || !password || !correo.includes('@') || password.trim().length < 4 || password.length > 30) {
+            return res.render('login', { error: 'Formato de correo o contraseña inválido' });
+        }
+
         const usuario = await Usuario.findOne({ where: { correo } });
 
         if (!usuario) {
